@@ -1,0 +1,551 @@
+swagger: '2.0'
+info:
+  version: '1.0.0'
+  title: '[Demo] Approval API'
+  description: | 
+    
+    Example of a more complex real-world application. 
+    
+    The Approval API offers the uniform interface 
+    to create and mange requests for approval regardless
+    of the backend used.
+
+
+host: adidas.api.mashery.com
+basePath: /demo-approval-api
+
+schemes:
+  - https
+  
+securityDefinitions:
+   "API Key":
+     type: apiKey
+     in: header
+     name: Adidas-API-Key
+
+security:
+  - "API Key": []
+
+paths:
+
+  /:
+    x-summary: API Root
+
+    get:
+      summary: Retrieve the API Root
+      description: The initial set of available relations
+      produces:
+        - application/hal+json         
+      responses:
+        200:
+          description: The root of the API
+          schema:
+            type: object
+            
+            example:
+              _links:
+                self:
+                  href: /
+                  
+                user: # Currently autenticated user
+                  href: /user/1
+                  
+                requests: # List of all requests in the system
+                  href: /requests
+          
+  /users/{user_id}:
+    x-summary: User
+
+    parameters:
+      - name: user_id
+        in: path
+        description: Id of the User
+        required: true
+        type: string
+        x-example: '1'
+
+    get:
+      summary: Retrieve the User
+      produces:
+        - application/hal+json       
+      responses:
+        200:
+          description: User details
+          schema:
+            $ref: '#/definitions/user'
+
+  /users/{user_id}/backends:
+    x-summary: User Backends
+
+    parameters:
+      - name: user_id
+        in: path
+        description: Id of the User
+        required: true
+        type: string
+        x-example: '1'
+
+    get:
+      summary: Retrieve the User Backends
+      description: Gets a list of the backends associated to a user, each one indicating the count of current open requests.
+      produces:
+        - application/hal+json       
+      responses:
+        200:
+          description: Backend details
+          schema:
+            $ref: '#/definitions/backends'
+    
+    post:
+      summary: Add Backend Association
+      parameters:
+        - name: Backend Association
+          in: body
+          description: Backend Association
+          required: true
+          schema:
+            type: object
+      consumes:
+        - application/json
+      produces:
+        - application/hal+json
+      responses:
+        201:
+          description: Newly associated backed
+          schema:
+            $ref: '#/definitions/backend'
+
+  /users/{user_id}/backends/{backend_id}:
+    x-summary: User Backend
+
+    parameters:
+      - name: user_id
+        in: path
+        description: Id of the User
+        required: true
+        type: string
+        x-example: '1'
+
+      - name: backend_id
+        in: path
+        description: Id of the backend
+        required: true
+        type: string
+        x-example: '1'
+
+    get:
+      summary: Retrieve the Backend
+      produces:
+        - application/hal+json
+      responses:
+        200:
+          description: Backend details
+          schema:
+            $ref: '#/definitions/backend'
+            
+    delete:
+      summary: Delete Backend Association
+      responses:
+        204:
+          description: Backend association deleted
+      
+            
+  /users/{user_id}/backends/{backend_id}/requests:
+    x-summary: User Backend Approval Requests
+    
+    parameters:
+      - name: user_id
+        in: path
+        description: Id of the User
+        required: true
+        type: string
+        x-example: '1'
+
+      - name: backend_id
+        in: path
+        description: Id of the backend
+        required: true
+        type: string
+        x-example: '1'
+
+    get:
+      summary: Retrieve the User Backend Requests
+      description: Gets a list of requests from one of the backends associated to a user
+      produces:
+        - application/hal+json
+      responses:
+        200:
+          description: Requests
+          schema:
+            $ref: '#/definitions/approvalRequests'
+            
+    post:
+      summary: Create New User Backend Requests
+      parameters:
+        - name: New Approval Request 
+          in: body
+          description: New requests details
+          required: true
+          schema:
+            type: object
+      consumes:
+        - application/json
+      produces:
+        - application/hal+json
+      responses:
+        201:
+          description: Newly created request
+          schema:
+            $ref: '#/definitions/approvalRequest'
+            
+  /requests:
+    x-summary: Approval Requests
+    get: 
+      summary: Retrieve the Approval Requests
+      description: Gets every Approval Request in the System
+      produces:
+        - application/hal+json
+      responses:
+        200:
+          description: Requests
+          schema:
+            $ref: '#/definitions/approvalRequests'      
+      
+
+  /requests/{request_id}:
+    x-summary: Approval Request
+
+    parameters:
+      - name: request_id
+        in: path
+        description: Id of the Request
+        required: true
+        type: string
+        x-example: '1234'
+
+    get:
+      summary: Retrieve the Approval Request
+      description: | 
+        Gets a specific request.
+        Based on the request `accept` header returns either the 
+        `hal+json` or PDF represetnation of the Approval Request ([content negotiation](https://developer.mozilla.org/en-US/docs/Web/HTTP/Content_negotiation)).
+      produces:
+        - application/hal+json
+        - application/pdf
+      responses:
+        200:
+          description: Request details
+          schema:
+            $ref: '#/definitions/approvalRequest'
+            
+    patch:
+      summary: Update the Request State
+      description: Approve, Reject, Reopen or Cancel the Request
+      parameters:
+        - name: New Approval Request State
+          in: body
+          description: Partial order update
+          required: true
+          schema:
+            type: object
+            example:
+              state: approved # One Of: cancelled, approved, rejected, deleted
+      consumes:
+        - application/json
+      produces:
+        - application/hal+json 
+      responses:
+        200:
+          description: Request details
+          schema:
+            $ref: '#/definitions/approvalRequest'
+            
+    delete:
+      summary: Delete the Request
+      description: Deletes the Approval Request from the system, only available in the Cancelled state.
+      responses:
+        204:
+          description: Request deleted
+          
+  /requests/{request_id}/approvers/:
+    x-summary: Approval Request Approvers
+
+    parameters:
+      - name: request_id
+        in: path
+        description: Id of the Request
+        required: true
+        type: string
+        x-example: '1234'
+
+    get:
+      summary: Retrieve Request Approvers
+      description: Gets the list of approvers for a specific request
+      produces:
+        - application/hal+json
+      responses:
+        200:
+          description: Approver details
+          schema:
+            $ref: '#/definitions/approvers'          
+
+  /approvers/{approver_id}:
+    x-summary: Approver
+
+    parameters:
+      - name: approver_id
+        in: path
+        description: Id of the Approver
+        required: true
+        type: string
+        x-example: '1234'
+
+    get:
+      summary: Retrieve the Approver
+      produces:
+        - application/hal+json
+      responses:
+        200:
+          description: Approver details
+          schema:
+            $ref: '#/definitions/approver'
+
+definitions:
+  # NOTE: Definitions are missing JSON Schemas, they are used only to display examples.
+  #       The data fields are just imaginary and not real fields from GENERIC MOBILE APPROVAL pdf
+
+  # User
+  user:
+    type: object
+    
+    example:
+      _links:
+        self: 
+          href: /users/1
+
+        backends: 
+          href: /users/1/backends
+          
+      name: Z
+
+  # User Backends Collection
+  backends:
+    type: object
+    
+    example:
+      _links:
+        self: 
+          href: /users/1/backends
+
+        backend: 
+          - href: /users/1/backends/1
+          - href: /users/1/backends/2
+          - href: /users/1/backends/3
+          
+        create:
+          href: /users/1/backends
+          
+      backendsCount: 3
+
+  # User Backend
+  backend:
+    type: object
+    
+    example:
+      _links:
+        self:
+          href: /users/1/backends/1
+
+        requests: 
+          href: /users/1/backends/1/requests
+          
+        delete:
+          href: /users/1/backends/1
+
+  # User Backends Requests
+  approvalRequests:
+    type: object
+    
+    example:
+      _links:
+        self:
+          href: /users/1/backends/1
+
+        request: 
+          - href: /requests/1
+          - href: /requests/2
+          - href: /requests/3
+
+      requestCount: 3
+
+  # Approval Request
+  # Request can have 3 (4) states:
+  # 1. Pending (default)
+  # 2. Approved
+  # 3. Rejected
+  # 4. Canceled
+  approvalRequest:
+    type: object
+    example:
+      # Example of the pending state
+      _links:
+        self: 
+          href: /requests/1
+
+        approve: 
+          href: /requests/1
+
+        cancel: 
+          href: /requests/1
+
+        reject: 
+          href: /requests/1
+          
+        approvers:
+          href: /requests/1/approvers
+          
+        backend:
+          href: /users/1/backends/1
+
+      state: pending
+
+  # Approvers
+  approvers:
+    type: object
+    
+    example:
+      _links:
+        self:
+          href: /requests/1/approvers
+
+        approver: 
+          - href: /approver/1
+          - href: /approver/2
+          
+      approverCount: 2
+
+  # Approver
+  approver:
+    type: object
+    
+    example:
+      _links:
+        self:
+          href: /approvers/1
+
+        user: 
+          href: /users/1
+
+  # User Devices Collection
+  devices:
+    type: object
+
+  # User Device
+  device:
+    type: object
+
+  # Resource Not Found Error
+  problemNotFound:
+    type: object
+    allOf:
+      - $ref: '#/definitions/problemDetail'
+    example:
+      title: 'Not Found'
+      detail: 'Cannot find the requested resource'
+      status: 404
+      instance: '/backends/7777'
+
+  #
+  # -- DO NOT EDIT BEYOND THIS POINT --
+  #
+
+  # Media Types Definitions
+
+  #
+  # application/problem+json
+  #
+  problemDetail:
+    type: object
+    properties:
+      type:
+        type: string
+      title:
+        type: string
+      status:
+        type: number
+      detail:
+        type: string
+      instance:
+        type: string
+    required:
+      - title
+      - detail
+
+  #
+  # application/hal+json defintion
+  #
+  halLinkObject:
+    type: object
+    required:
+      - href
+    properties:
+      href:
+        type: string
+      templated:
+        type: boolean
+      type:
+        type: string
+      deprecation:
+        type: string
+      name:
+        type: string
+      profile:
+        type: string
+      title:
+        type: string
+      hreflang:
+        type: string
+
+  halCuriesLink:
+    title: HAL Curies Link
+    allOf:
+      - type: object
+        properties:
+          templated:
+            enum:
+              - true
+        required:
+          - templated
+      - $ref: '#/definitions/halLinkObject'
+
+  halResource:
+    title: HAL Resource Object
+    type: object
+    properties:
+      _links:
+        type: object
+        additionalProperties:
+          # WARN: Should be "anyOf" but "anyOf" isn't supported in Swagger 2.0
+          allOf:
+            - $ref: '#/definitions/halLinkObject'
+            - type: array
+              items:
+                - $ref: '#/definitions/halLinkObject'
+        properties:
+          curies:
+            # WARN: Should be "anyOf" but "anyOf" isn't supported in Swagger 2.0
+            allOf:
+              - $ref: '#/definitions/halCuriesLink'
+              - type: array
+                items:
+                  - $ref: '#/definitions/halCuriesLink'
+      _embedded:
+        type: object
+        additionalProperties: true
+        # WARN: Apiary doesn't support circular references
+        # additionalProperties:
+        #   anyOf:
+        #     - $ref: '#/definitions/hal_resource'
+        #     - type: array
+        #       items:
+        #         - $ref: '#/definitions/hal_resource'
