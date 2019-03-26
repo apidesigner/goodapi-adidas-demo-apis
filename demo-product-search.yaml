@@ -1,0 +1,299 @@
+swagger: '2.0'
+info:
+  version: '1.0.0'
+  title: '[Demo] Product Article Search'
+  description: |
+    This API demonstrates how to design a search endpoint that conforms to 
+    [adidas API guidelines](https://www.gitbook.com/book/adidas-group/api-guidelines/details)
+    and REST principles.
+
+schemes:
+  - https
+
+produces:
+  - application/hal+json
+  - application/problem+json
+
+paths:
+  /:
+    x-summary: API Root
+
+    get:
+      summary: Retrieve API Root
+      responses:
+        200:
+          description: The root of the API
+          schema:
+            $ref: '#/definitions/hal_root'
+
+  /products:
+    x-summary: Articles
+    
+    parameters:
+    
+      # Search Parameters
+      # Note this is just an example, you might use
+      - name: q
+        in: query
+        description: |
+          #### Search Query
+      
+          Supported query-formats are:
+          
+          - Keyword matching
+          - Wildcard matching
+          
+          ##### Keyword matching
+          
+          | Pattern | Scenario |
+          | --- | --- |
+          | `article_description:Boost` | Search for "Boost" in the `article_description` field |
+          
+          ##### Wildcard matching
+          
+          | Pattern | Scenario |
+          | --- | --- |
+          | `article_description:Boost*` | Search for any word that starts with "Boost" `article_description` field |
+          
+          
+        required: false
+        type: string
+        x-example: article_description:Boost
+      
+      # Pagination Parameters
+      #
+      # See https://adidas-group.gitbooks.io/api-guidelines/content/execution/pagination.html
+      
+      - name: offset
+        in: query
+        description: Number of articles/results to skip in the response
+        required: false
+        type: number
+        x-example: 100  
+  
+      # Pagination Parameter
+      
+      - name: limit
+        in: query
+        description: Limits the number of articles/results in the response
+        required: false
+        type: number
+        x-example: 10
+
+    get:
+      summary: Retrieve List of Articles
+      responses:
+        200:
+          description: The list of products
+          schema:
+            $ref: '#/definitions/hal_articles'
+
+  /products/articles/{article_number}:
+    x-summary: Article
+
+    parameters:
+      - name: article_number
+        in: path
+        description: Article number
+        required: true
+        type: string
+        x-example: S88409
+
+    get:
+      summary: Retrieve Article
+      responses:
+        200:
+          description: A particular Article
+          schema:
+            $ref: '#/definitions/hal_article'
+
+definitions:
+  #
+  # API Root
+  #
+  hal_root:
+    type: object
+    allOf:
+      - $ref: '#/definitions/hal_resource'
+    example:
+      _links:
+        self:
+          href: /
+          
+        articles:
+          href: /products/articles
+
+  #
+  # Articles Collection Resource
+  #
+  hal_articles:
+    type: object
+    allOf:
+      - $ref: '#/definitions/hal_resource'
+    example:
+      _links:
+        self:
+          href: /products/articles
+
+      _embedded:
+        order:
+          - _links:
+              self:
+                href: /products/articles/S88409
+
+            article_number: "S88409"
+            sku_ean: "4055011282323"
+            article_description: "Ultra Boost XT"
+
+          - _links:
+              self:
+                href: /products/articles/S88410
+
+            article_number: "S88410"
+            sku_ean: "4055011282324"
+            article_description: "Ultra Boost LTD"
+
+  #
+  # One Article Resource
+  #
+  hal_article:
+    type: object
+    allOf:
+      - $ref: '#/definitions/hal_resource'
+      - $ref: '#/definitions/article'
+    example:
+      _links:
+        self:
+          href: /products/articles/S88409
+
+      article_number: "S88409"
+      sku_ean: "4055011282323"
+      article_description: "Ultra Boost XT"
+
+  # Article Data
+  #
+  # NOTE: This is just an example of fields, not the real the fields of Article Data Model
+  article:
+    type: object
+    properties:
+      article_number:
+        type: string
+        description: Article number
+      
+      sku_ean:
+        type: string
+        description: SKU EAN Code
+        
+      article_description:
+        type: string
+        description: Description of the article
+        
+      acs_model_name:
+        type: string
+        
+      b2c_model_name:
+        type: string
+        
+    required:
+      - article_number
+
+    example:
+      article_number: "S88409"
+      sku_ean: "4055011282323"
+      article_description: "Ultra Boost XT"
+
+  #
+  # -- DO NOT EDIT BEYOND THIS POINT --
+  #
+
+  # Media Types Definitions
+
+  #
+  # application/problem+json
+  #
+  problem_detail:
+    type: object
+    properties:
+      type:
+        type: string
+      title:
+        type: string
+      status:
+        type: number
+      detail:
+        type: string
+      instance:
+        type: string
+    required:
+      - title
+      - detail
+
+  #
+  # application/hal+json defintion
+  #
+  hal_link_object:
+    type: object
+    required:
+      - href
+    properties:
+      href:
+        type: string
+      templated:
+        type: boolean
+      type:
+        type: string
+      deprecation:
+        type: string
+      name:
+        type: string
+      profile:
+        type: string
+      title:
+        type: string
+      hreflang:
+        type: string
+
+  hal_curies_link:
+    title: HAL Curies Link
+    allOf:
+      - type: object
+        properties:
+          templated:
+            enum:
+              - true
+        required:
+          - templated
+      - $ref: '#/definitions/hal_link_object'
+
+  hal_resource:
+    title: HAL Resource Object
+    type: object
+    properties:
+      _links:
+        type: object
+        additionalProperties:
+          # WARN: Should be "anyOf" but "anyOf" isn't supported in Swagger 2.0
+          allOf:
+            - $ref: '#/definitions/hal_link_object'
+            - type: array
+              items:
+                - $ref: '#/definitions/hal_link_object'
+        properties:
+          curies:
+            # WARN: Should be "anyOf" but "anyOf" isn't supported in Swagger 2.0
+            allOf:
+              - $ref: '#/definitions/hal_curies_link'
+              - type: array
+                items:
+                  - $ref: '#/definitions/hal_curies_link'
+      _embedded:
+        type: object
+        additionalProperties: true
+        # WARN: Apiary doesn't support circular references
+        # additionalProperties:
+        #   anyOf:
+        #     - $ref: '#/definitions/hal_resource'
+        #     - type: array
+        #       items:
+        #         - $ref: '#/definitions/hal_resource'
+        
