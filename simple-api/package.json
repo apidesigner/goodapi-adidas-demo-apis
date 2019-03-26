@@ -1,0 +1,19 @@
+{
+  "name": "demo-simple-api",
+  "version": "1.0.0",
+  "description": "Implementation of the Simplest API",
+  "main": "server.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/apidesigner/goodapi-adidas-demo-apis.git"
+  },
+  "author": "Zdenek.Nemec@externals.adidas-group.com",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/apidesigner/goodapi-adidas-demo-apis/issues"
+  },
+  "homepage": "https://github.com/apidesigner/goodapi-adidas-demo-apis#readme",
+  "dependencies": {
+    "express": "^4.14.0"
+  }
+}

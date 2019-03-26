@@ -6,8 +6,8 @@ info:
     Demo of a Simple API including CI/CD tests and Apiary integration.
 
     - [Apiary API Documentation](http://docs.demosimpleapi.apiary.io/)
-    - [GitHub repository](https://github.com/adidas-group/demo-simple-api)
-    - [CirlceCI CI/CD example](https://circleci.com/gh/adidas-group/demo-simple-api)
+    - [GitHub repository](https://github.com/)
+    - [CirlceCI CI/CD example](https://circleci.com/gh/)
     - [Bitbucket version](http://docs.demosimpleapibitbucket.apiary.io/)
 
 paths:
