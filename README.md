@@ -1,2 +1,2 @@
-# goodapi-adidas-demo-apis
+# Adidas Demo APIs
 Demo APIs for Adidas API Program

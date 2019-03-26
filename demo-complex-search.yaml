@@ -1,0 +1,251 @@
+swagger: '2.0'
+info:
+  version: '1.0.0'
+  title: "[Demo] Complex Search Parameters"
+  description: |
+    This API demonstrates the use of complex search parameters on a collection of resources
+    
+schemes:
+  - https
+
+produces:
+  - application/hal+json      # Representation message format
+  - application/problem+json  # Error message format
+
+paths:
+  /products:
+    x-summary: List of Products
+
+    get:
+      summary: Search List of Products
+      description: | 
+        
+        This action allows to retrieve filtered list of products based on mutliple criteria:
+        
+        ### 1. **Filter Products by Season and Article Number**
+        To search for a particular article id within a season provide the `season_id` and `article_id` parameters.
+        
+        ### 2. **Filter Products by Season and Article Manufacturer**
+        To search for a particular article manufacturer within a season provide the `season_id` and `article_manufacturer` parameters.
+        
+        ### 3. **Filter Product by Material**
+        To search for a product with a particular material provide the `material_id` parameter only.
+        
+        See the operation for details for more info on the paremeters.
+        
+      parameters:
+        - name: season_id
+          in: query
+          description: | 
+            Season Id. Denotes an id of a season to search in.
+            
+            When provided you **MUST** also provide either _Article Id_ **OR**
+            _Article Manufacturer Id_.
+            
+            **Mutually exclusive** with _Material Id_.
+          required: false
+          type: string
+          x-example: season_id_1
+          
+        - name: article_id
+          in: query
+          description: |
+            Article Id. Denotes an id of an article to search for.
+            
+            When provided you **MUST** also provide a _Season Id_.
+            **Mutually exclusive** with _Article Manufacturer Id_.
+          required: false
+          type: string
+          x-example: article_id_1     
+          
+        - name: article_manufacturer
+          in: query
+          description: | 
+            Article Manufacturer Id. Denotes an id of an manufacturer to search for.
+            
+            When provided you **MUST** also provide an _Season Id_.
+            **Mutually exclusive** with _Article Id_. 
+          required: false
+          type: string
+          x-example: article_manufacturer_1
+          
+        - name: material_id
+          in: query
+          description: | 
+            Material Id. Denotes an id of material to search for.
+            
+            **Mutually exclusive** with _Season Id_. If you provide
+            _Material Id_ you **MUST NOT** provide _Season Id_, _Article Id_ or _Article Manufacturer Id_.
+          required: false
+          type: string
+          x-example: material_id_1  
+          
+        
+      responses:
+        200:
+          description: The list of Products
+          schema:
+            $ref: '#/definitions/halProducts'
+
+  /products/{product_id}:
+    x-summary: Order
+
+    parameters:
+      - name: product_id
+        in: path
+        description: Id of the Order
+        required: true
+        type: string
+        x-example: "1234"
+
+    get:
+      summary: Retrieve Product
+      responses:
+        200:
+          description: A particular Product
+          schema:
+            $ref: '#/definitions/halProduct'
+
+definitions:
+  #
+  # Products Resource
+  #
+  halProducts:
+    type: object
+    allOf:
+      - $ref: '#/definitions/halResource'
+    example:
+      _links:
+        self:
+          href: /products
+
+      _embedded:
+        product:
+          - $ref: '#/definitions/halProduct/example'
+
+  #
+  # Order Resource
+  #
+
+  # HAL Wrapper
+  halProduct:
+    type: object
+    allOf:
+      - $ref: '#/definitions/halResource'
+      - $ref: '#/definitions/product'
+    example:
+      _links:
+        self:
+          href: /products/1234
+          
+      someField: 1234
+      otherField: 42
+
+  # Product
+  product:
+    type: object
+    properties:
+      someField:
+        type: number
+      otherField:
+        type: number
+    required:
+      - someField
+    example:
+      someField: 1234
+      otherField: 42
+
+  #
+  # -- DO NOT EDIT BEYOND THIS POINT --
+  #
+
+  # Media Types Definitions
+
+  #
+  # application/problem+json
+  #
+  problemDetail:
+    type: object
+    properties:
+      type:
+        type: string
+      title:
+        type: string
+      status:
+        type: number
+      detail:
+        type: string
+      instance:
+        type: string
+    required:
+      - title
+      - detail
+
+  #
+  # application/hal+json defintion
+  #
+  halLinkObject:
+    type: object
+    required:
+      - href
+    properties:
+      href:
+        type: string
+      templated:
+        type: boolean
+      type:
+        type: string
+      deprecation:
+        type: string
+      name:
+        type: string
+      profile:
+        type: string
+      title:
+        type: string
+      hreflang:
+        type: string
+
+  halCuriesLink:
+    title: HAL Curies Link
+    allOf:
+      - type: object
+        properties:
+          templated:
+            enum:
+              - true
+        required:
+          - templated
+      - $ref: '#/definitions/halLinkObject'
+
+  halResource:
+    title: HAL Resource Object
+    type: object
+    properties:
+      _links:
+        type: object
+        additionalProperties:
+          # WARN: Should be "anyOf" but "anyOf" isn't supported in Swagger 2.0
+          allOf:
+            - $ref: '#/definitions/halLinkObject'
+            - type: array
+              items:
+                - $ref: '#/definitions/halLinkObject'
+        properties:
+          curies:
+            # WARN: Should be "anyOf" but "anyOf" isn't supported in Swagger 2.0
+            allOf:
+              - $ref: '#/definitions/halCuriesLink'
+              - type: array
+                items:
+                  - $ref: '#/definitions/halCuriesLink'
+      _embedded:
+        type: object
+        additionalProperties: true
+        # WARN: Apiary doesn't support circular references
+        # additionalProperties:
+        #   anyOf:
+        #     - $ref: '#/definitions/hal_resource'
+        #     - type: array
+        #       items:
+        #         - $ref: '#/definitions/hal_resource'
