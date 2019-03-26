@@ -1,0 +1,19 @@
+{
+  "name": "demo-appointment-service",
+  "version": "1.0.0",
+  "description": "Demo API used during trainings",
+  "main": "server.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/apidesigner/goodapi-adidas-demo-apis"
+  },
+  "author": "",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/apidesigner/goodapi-adidas-demo-apisissues"
+  },
+  "homepage": "https://github.com/apidesigner/goodapi-adidas-demo-apis#readme",
+  "dependencies": {
+    "express": "^4.15.2"
+  }
+}
