@@ -1,0 +1,315 @@
+swagger: '2.0'
+info:
+  version: "1.0.0" # ERROR: String MUST be `'1.0.0'` (MUST NOT be double quote)
+  title: 'Style Guide Test' # ERROR: Title MUST be in the `[Domain] API Name` format
+  
+  # ERROR: The following description is using British speling of the word "flavour", it should use American English "flavor"
+  description: |
+    This API intentionally **violates** [adidas API guidelines](https://www.gitbook.com/book/adidas-group/api-guidelines/details).
+    
+    Its puprose is to demonstrate the errors and serve as the baseline for Apiary Style Guide Assertion testing.
+    See the [API Description source](https://github.com/adidas-group/demo-guidelines-violation/blob/master/swagger.yaml) comments for the explanation of the guidelines violations. 
+    
+    This API is [documented at Apiary](http://docs.demoguidelines.apiary.io/).
+    
+    adidas API Guidelines-compliant flavour can be found at <http://docs.demotemplate.apiary.io>
+  
+schemes:
+  - http  # ERROR: MUST be `https`
+
+produces:
+  - application/json  # ERROR: MUST be `application/hal+json` and `application/problem+json`
+
+paths:
+  /:
+    # ERROR: Must have name (`x-summary: API Root`)
+
+    get:
+      # ERROR: Must have name (`summary: Retrieve API Root`)
+      responses:
+        200:
+          description: The root of the API
+          schema:
+            $ref: '#/definitions/HALRoot' # ERROR: Must be `hal_root` ("snake_case")
+
+  /listOfOrders: # ERROR: Must be `list_of_orders` ("snake_case")
+    x-summary: list_of_orders # ERROR: Must be `List of Orders` ("Title Case")
+
+    get:
+      summary: RetrieveListofOrders # ERROR: Must be `Retrieve List of Orders` ("Title Case")
+      consumes:
+        - application/json  # ERROR: GET / HEAD method MUST not have a request body of application/json
+      parameters:
+        - name: Input
+          in: body  # ERROR: GET / HEAD method MUST not have a request body
+          schema:
+            $ref: '#/definitions/order'
+      responses:
+        200:
+          description: The list of Orders
+          schema:
+            $ref: '#/definitions/hal_orders'
+
+    post:
+      summary: Create a new Order
+      consumes:
+        - application/json
+      produces: 
+        - application/json # ERROR: Must be of `application/hal+json` type (or not present at this level)
+      parameters:
+        - name: Order
+          in: body
+          description: Order to be created
+          required: true
+          schema:
+            $ref: '#/definitions/order'
+      responses:
+        201:
+          description: Newly created order
+          schema:
+            $ref: '#/definitions/hal_order'
+
+  /orders/{order-id}:  # ERROR: must be `order_id` ("snake_case")
+    x-summary: Order
+
+    parameters:
+      - name: order-id
+        in: path
+        description: Id of the Order
+        required: true
+        type: string
+        # ERROR: URI Template Path Variables must have example value (e.g.: `x-example: 1234`)
+
+    get:
+      summary: Retrieve Order
+      responses:
+        200:
+          description: A particular Order
+          headers:
+            Content-Type:
+              type: string
+              default: application/json # ERROR: Must be of `application/hal+json` type (or not present at this level) 
+            customHeader: # ERROR: Must be `Custom-Header` ("Hyphenated-Pascal-Case")
+              type: string
+              default: Hello
+          schema:
+            $ref: '#/definitions/hal_order'
+
+        404:
+          description: The request Order wasn't found
+          # ERROR: Error 4xx and 5xx responses must be of `application/problem+json` type:
+          # headers:
+          #   Content-Type:
+          #     type: string
+          #     default: application/problem+json
+          schema:
+            $ref: '#/definitions/order_not_found'
+
+    patch:
+      summary: Update Order
+      consumes:
+        - application/json
+      parameters:
+        - name: Order
+          in: body
+          description: Partial order update
+          required: true
+          schema:
+            $ref: '#/definitions/order_patch'
+      responses:
+        200:
+          description: The Order was updated
+          schema:
+            $ref: '#/definitions/hal_order'
+
+    delete:
+      summary: Delete Order
+      # ERROR: Must have `produces: []` to surpress (unset) Content-Type header value
+      responses:
+        204:
+          description: The Order was deleted
+
+definitions:
+  #
+  # API Root
+  #
+  HALRoot: # ERROR: Must be hal_root ("snake_case")
+    type: object
+    allOf:
+      - $ref: '#/definitions/hal_resource'
+    example:
+      _links:
+        self:
+          href: /
+        orders:
+          href: /orders
+        fulfillment_provider: # ERROR: Must be `fulfillment-provider` (all lowercase, no underscore, ALPHA only)
+          href: /users/joe
+
+  #
+  # Orders Resource
+  #
+  hal_orders:
+    type: object
+    allOf:
+      - $ref: '#/definitions/hal_resource'
+    example:
+      _links:
+        self:
+          href: /orders
+
+      _embedded:
+        order:
+          $ref: '#/definitions/hal_order/example'
+
+  #
+  # Order Resource
+  #
+
+  # HAL Wrapper
+  hal_order:
+    type: object
+    allOf:
+      - $ref: '#/definitions/hal_resource'
+      - $ref: '#/definitions/order'
+    example:
+      _links:
+        self:
+          href: /orders/1234
+      orderNumber: 1234 # ERROR: Must be `order_number` ("snake_case")
+      item_count: 42
+      status: pending
+
+  # Partial Order
+  order_patch:
+    type: object
+    allOf:
+      - $ref: '#/definitions/order'
+    example:
+      status: cancelled
+
+  # Order
+  order:
+    type: object
+    properties:
+      orderNumber:
+        type: number
+      itemCount:
+        type: number
+      status:
+        type: string
+    required:
+      - order_number
+      - item_count
+    example:
+      orderNumber: 42 # ERROR: Must be `order_number` ("snake_case")
+      item_count: 3
+      status: pending
+      colour: red # ERROR: Keys, values, names descriptions everything must use American English
+
+  # Order Not Found Error
+  order_not_found:
+    type: object
+    allOf:
+      - $ref: '#/definitions/problem_detail'
+    example:
+      # ERROR: MUST have `title` and `detail` fields    
+      # e.g: title: 'Not Found'
+      # e.g.: detail: 'Cannot find the requested order'
+      status: 404
+      instance: '/orders/1234'
+
+  #
+  # -- DO NOT EDIT BEYOND THIS POINT --
+  #
+
+  # Media Types Definitions
+
+  #
+  # application/problem+json
+  #
+  problem_detail:
+    type: object
+    properties:
+      type:
+        type: string
+      title:
+        type: string
+      status:
+        type: number
+      detail:
+        type: string
+      instance:
+        type: string
+    required:
+      - title
+      - detail
+
+  #
+  # application/hal+json defintion
+  #
+  hal_link_object:
+    type: object
+    required:
+      - href
+    properties:
+      href:
+        type: string
+      templated:
+        type: boolean
+      type:
+        type: string
+      deprecation:
+        type: string
+      name:
+        type: string
+      profile:
+        type: string
+      title:
+        type: string
+      hreflang:
+        type: string
+
+  hal_curies_link:
+    title: HAL Curies Link
+    allOf:
+      - type: object
+        properties:
+          templated:
+            enum:
+              - true
+        required:
+          - templated
+      - $ref: '#/definitions/hal_link_object'
+
+  hal_resource:
+    title: HAL Resource Object
+    type: object
+    properties:
+      _links:
+        type: object
+        additionalProperties:
+          # WARN: Should be "anyOf" but "anyOf" isn't supported in Swagger 2.0
+          allOf:
+            - $ref: '#/definitions/hal_link_object'
+            - type: array
+              items:
+                - $ref: '#/definitions/hal_link_object'
+        properties:
+          curies:
+            # WARN: Should be "anyOf" but "anyOf" isn't supported in Swagger 2.0
+            allOf:
+              - $ref: '#/definitions/hal_curies_link'
+              - type: array
+                items:
+                  - $ref: '#/definitions/hal_curies_link'
+      _embedded:
+        type: object
+        additionalProperties: true
+        # WARN: Apiary doesn't support circular references
+        # additionalProperties:
+        #   anyOf:
+        #     - $ref: '#/definitions/hal_resource'
+        #     - type: array
+        #       items:
+        #         - $ref: '#/definitions/hal_resource'
