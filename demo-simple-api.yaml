@@ -1,0 +1,39 @@
+swagger: '2.0'
+info:
+  version: '1.0'
+  title: '[Demo] Simple API (GitHub)'
+  description: |
+    Demo of a Simple API including CI/CD tests and Apiary integration.
+
+    - [Apiary API Documentation](http://docs.demosimpleapi.apiary.io/)
+    - [GitHub repository](https://github.com/adidas-group/demo-simple-api)
+    - [CirlceCI CI/CD example](https://circleci.com/gh/adidas-group/demo-simple-api)
+    - [Bitbucket version](http://docs.demosimpleapibitbucket.apiary.io/)
+
+paths:
+  /:
+    x-summary: API Root
+    x-description: The Root of the API
+    
+    
+    get:
+      summary: Retireve the API Root
+      description: Retrieves the message for the world!
+      produces:
+        - application/hal+json; charset=utf-8
+      responses:        
+        200:
+          description: The message
+          schema:
+            $ref: '#/definitions/message'
+
+definitions:
+  message:
+    type: object
+    properties:
+      message:
+        type: string
+    required:
+      - message
+    example:
+      message: Hello World!
