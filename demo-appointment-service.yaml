@@ -1,0 +1,278 @@
+swagger: '2.0'
+info:
+  version: '1.0.0'
+  title: '[Demo] Appointment API'
+  description: API used during the adidas API training
+
+host: demo-appointment-service.herokuapp.com
+
+schemes:
+  - https
+
+produces:
+  - application/hal+json; charset=utf-8      # Representation message format
+  - application/problem+json; charset=utf-8  # Error message format
+
+paths:
+  /appointments:
+    x-summary: List of Appointments
+
+    get:
+      summary: Retrieve Appointments
+      parameters:
+        - name: date
+          in: query
+          description: Date to retrieve Appointments for
+          required: false
+          type: string
+          x-example: '2017-06-21'
+
+      responses:
+        200:
+          description: Appointments
+          schema:
+            $ref: '#/definitions/halAppointmentList'
+
+    post:
+      summary: Create Appointment
+      consumes:
+        - application/json
+      parameters:
+        - name: Appointment
+          in: body
+          description: Appointment data
+          required: true
+          schema:
+            $ref: '#/definitions/appointment'
+      responses:
+        201:
+          description: Newly created Appointment
+          schema:
+            $ref: '#/definitions/halAppointment'
+
+  /appointments/{appointment_id}:
+    x-summary: Appointment
+
+    parameters:
+      - name: appointment_id
+        in: path
+        description: Id of the Appointment
+        required: true
+        type: string
+        x-example: 1234
+
+    get:
+      summary: Retrieve Appointment
+      responses:
+        200:
+          description: One Appointment
+          schema:
+            $ref: '#/definitions/halAppointment'
+
+        404:
+          description: The requested Appointment wasn't found
+          headers:
+            Content-Type:
+              type: string
+              default: application/problem+json
+          schema:
+            $ref: '#/definitions/appointmentNotFound'
+
+    patch:
+      summary: Edit Appointment
+      consumes:
+        - application/json
+      parameters:
+        - name: Appointment
+          in: body
+          description: Appointment data
+          required: true
+          schema:
+            $ref: '#/definitions/appointment'
+      responses:
+        200:
+          description: The Appointment was edited
+          schema:
+            $ref: '#/definitions/halAppointment'
+
+    delete:
+      summary: Cancel Appointment
+      produces: []
+      responses:
+        204:
+          description: The Appointment was canceled
+
+definitions:
+  #
+  # Appointment
+  #
+  appointment:
+    type: object
+    properties:
+      date_time:
+        type: string
+      name:
+        type: string
+    example:
+      time: '2017-01-01T12:00:00Z'
+      name: Zdenek Nemec
+      
+  halAppointment:
+    type: object
+    allOf:
+      - $ref: '#/definitions/halResource'
+      - $ref: '#/definitions/appointment'
+    example:
+      _links:
+        self:
+          href: /appointments/1234
+        edit:
+          href: /appointments/1234
+        cancel: 
+          href: /appointments/1234
+
+      time: '2017-01-01T12:00:00Z'
+      name: Zdenek Nemec
+      
+  halAppointmentList:
+    type: object
+    allOf:
+      - $ref: '#/definitions/halResource'
+    example:
+      _links:
+        self:
+          href: /appointments
+        
+        create:
+          href: /appointments          
+
+      _embedded:
+        appointment:
+          -
+            _links:
+              self:
+                href: /appointments/1234
+              edit:
+                href: /appointments/1234
+              cancel: 
+                href: /appointments/1234
+      
+            time: '2017-01-01T12:00:00Z'
+            name: Zdenek Nemec
+
+          -
+            _links:
+              self:
+                href: /appointments/1235
+              edit:
+                href: /appointments/1235
+              cancel: 
+                href: /appointments/1235
+      
+            time: '2017-01-01T13:00:00Z'
+            name: Pradeep Narsing
+
+  appointmentNotFound:
+    type: object
+    allOf:
+      - $ref: '#/definitions/problemDetail'
+    example:
+      title: 'Not Found'
+      detail: 'Cannot find the requested appointment'
+      status: 404
+      instance: '/appointment/8888'
+
+  #
+  # -- DO NOT EDIT BEYOND THIS POINT --
+  #
+
+  # Media Types Definitions
+
+  #
+  # application/problem+json
+  #
+  problemDetail:
+    type: object
+    properties:
+      type:
+        type: string
+      title:
+        type: string
+      status:
+        type: number
+      detail:
+        type: string
+      instance:
+        type: string
+    required:
+      - title
+      - detail
+
+  #
+  # application/hal+json defintion
+  #
+  halLinkObject:
+    type: object
+    required:
+      - href
+    properties:
+      href:
+        type: string
+      templated:
+        type: boolean
+      type:
+        type: string
+      deprecation:
+        type: string
+      name:
+        type: string
+      profile:
+        type: string
+      title:
+        type: string
+      hreflang:
+        type: string
+
+  halCuriesLink:
+    title: HAL Curies Link
+    allOf:
+      - type: object
+        properties:
+          templated:
+            enum:
+              - true
+        required:
+          - templated
+      - $ref: '#/definitions/halLinkObject'
+
+  halResource:
+    title: HAL Resource Object
+    type: object
+    properties:
+      _links:
+        type: object
+        additionalProperties:
+          # WARN: Should be "anyOf" but "anyOf" isn't supported in Swagger 2.0
+          allOf:
+            - $ref: '#/definitions/halLinkObject'
+            - type: array
+              items:
+                - $ref: '#/definitions/halLinkObject'
+        properties:
+          curies:
+            # WARN: Should be "anyOf" but "anyOf" isn't supported in Swagger 2.0
+            allOf:
+              - $ref: '#/definitions/halCuriesLink'
+              - type: array
+                items:
+                  - $ref: '#/definitions/halCuriesLink'
+      _embedded:
+        type: object
+        additionalProperties: true
+        # WARN: Apiary doesn't support circular references
+        # additionalProperties:
+        #   anyOf:
+        #     - $ref: '#/definitions/hal_resource'
+        #     - type: array
+        #       items:
+        #         - $ref: '#/definitions/hal_resource'
