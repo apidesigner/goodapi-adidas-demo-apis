@@ -1,0 +1,255 @@
+swagger: '2.0'
+info:
+  version: '1.0.0'
+  title: "[HR Demo] HR API"
+  description: |
+    This is our demo API
+
+schemes:
+  - https
+
+produces:
+  - application/hal+json      # Representation message format
+  - application/problem+json  # Error message format
+
+paths:
+  /employees:
+    x-summary: List of Employees
+
+    get:
+      summary: Retrieve Employees
+      description: dfjdskfjdskf
+      responses:
+        200:
+          description: lorem ipsum
+          schema:
+            $ref: '#/definitions/employees'
+            
+  /employees/{employeeId}:
+    x-summary: One Employee
+    
+    parameters:
+      - name: employeeId
+        in: path
+        description: Id of the Employee
+        required: true
+        type: string
+        x-example: 121212131313
+
+    get:
+      summary: Retrieve a Particular Employee
+      description: dfjdskfjdskf
+      responses:
+        200:
+          description: lorem ipsum
+          schema:
+            $ref: '#/definitions/employee'
+
+definitions:
+  employees: 
+    type: object
+    example:
+      totalCount: 42
+      employees: 
+        - name: John
+          email: john@a.com
+          
+        - name: Z
+          email: z@z.com
+        
+  employee:
+    type: object
+    example:
+      name: John
+      email: john@a.com
+
+
+  #
+  # API Root
+  #
+  halRoot:
+    type: object
+    allOf:
+      - $ref: '#/definitions/halResource'
+    example:
+      _links:
+        self:
+          href: /
+        orders:
+          href: /orders
+
+  #
+  # Orders Resource
+  #
+  halOrders:
+    type: object
+    allOf:
+      - $ref: '#/definitions/halResource'
+    example:
+      _links:
+        self:
+          href: /orders
+
+      _embedded:
+        order:
+          - $ref: '#/definitions/halOrder/example'
+
+  #
+  # Order Resource
+  #
+
+  # HAL Wrapper
+  halOrder:
+    type: object
+    allOf:
+      - $ref: '#/definitions/halResource'
+      - $ref: '#/definitions/order'
+    example:
+      _links:
+        self:
+          href: /orders/1234
+          
+        edit:
+          href: /orders/1234
+
+        delete: 
+          href: /orders/1234
+          
+        profile:
+          href: https://adidas-group.com/gdm/OMS
+          
+      orderNumber: 1234
+      itemCount: 42
+      status: pending
+
+  # Partial Order
+  orderPatch:
+    type: object
+    allOf:
+      - $ref: '#/definitions/order'
+    example:
+      status: cancelled
+
+  # Order
+  order:
+    type: object
+    properties:
+      orderNumber:
+        type: number
+      itemCount:
+        type: number
+      status:
+        type: string
+    required:
+      - orderNumber
+      - itemCount
+    example:
+      orderNumber: 42
+      itemCount: 3
+      status: pending
+
+  # Order Not Found Error
+  orderNotFound:
+    type: object
+    allOf:
+      - $ref: '#/definitions/problemDetail'
+    example:
+      title: 'Not Found'
+      detail: 'Cannot find the requested order'
+      status: 404
+      instance: '/orders/1234'
+
+  #
+  # -- DO NOT EDIT BEYOND THIS POINT --
+  #
+
+  # Media Types Definitions
+
+  #
+  # application/problem+json
+  #
+  problemDetail:
+    type: object
+    properties:
+      type:
+        type: string
+      title:
+        type: string
+      status:
+        type: number
+      detail:
+        type: string
+      instance:
+        type: string
+    required:
+      - title
+      - detail
+
+  #
+  # application/hal+json defintion
+  #
+  halLinkObject:
+    type: object
+    required:
+      - href
+    properties:
+      href:
+        type: string
+      templated:
+        type: boolean
+      type:
+        type: string
+      deprecation:
+        type: string
+      name:
+        type: string
+      profile:
+        type: string
+      title:
+        type: string
+      hreflang:
+        type: string
+
+  halCuriesLink:
+    title: HAL Curies Link
+    allOf:
+      - type: object
+        properties:
+          templated:
+            enum:
+              - true
+        required:
+          - templated
+      - $ref: '#/definitions/halLinkObject'
+
+  halResource:
+    title: HAL Resource Object
+    type: object
+    properties:
+      _links:
+        type: object
+        additionalProperties:
+          # WARN: Should be "anyOf" but "anyOf" isn't supported in Swagger 2.0
+          allOf:
+            - $ref: '#/definitions/halLinkObject'
+            - type: array
+              items:
+                - $ref: '#/definitions/halLinkObject'
+        properties:
+          curies:
+            # WARN: Should be "anyOf" but "anyOf" isn't supported in Swagger 2.0
+            allOf:
+              - $ref: '#/definitions/halCuriesLink'
+              - type: array
+                items:
+                  - $ref: '#/definitions/halCuriesLink'
+      _embedded:
+        type: object
+        additionalProperties: true
+        # WARN: Apiary doesn't support circular references
+        # additionalProperties:
+        #   anyOf:
+        #     - $ref: '#/definitions/hal_resource'
+        #     - type: array
+        #       items:
+        #         - $ref: '#/definitions/hal_resource'
